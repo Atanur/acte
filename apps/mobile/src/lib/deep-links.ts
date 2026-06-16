@@ -82,7 +82,7 @@ export function parseDeepLink(url: string): ParsedDeepLink | null {
 
   // Build the full path
   const path = `/${parsed.path}`;
-  const queryParams = extractStringParams(parsed.queryParams);
+  const queryParams = extractStringParams(parsed.queryParams as Record<string, string | string[]> | undefined);
 
   // Check against route map
   for (const [pattern, route] of Object.entries(DEEP_LINK_ROUTES)) {
