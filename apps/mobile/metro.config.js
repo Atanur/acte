@@ -6,8 +6,6 @@ const projectRoot = __dirname;
 const workspaceRoot = path.resolve(projectRoot, "../..");
 
 const config = getDefaultConfig(projectRoot);
-
-// Monorepo support
 config.watchFolders = [workspaceRoot];
 
 module.exports = withNativeWind(config, { input: "./src/app/global.css" });
