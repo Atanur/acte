@@ -80,7 +80,7 @@ export default function HomeScreen() {
 
       {/* Tech Stack */}
       {info && !error && (
-        <View style={styles.card}>
+        <View className={"bg-white"}>
           <Text style={styles.cardTitle}>TEKNOLOJİ STACK</Text>
           {Object.entries(info.techStack).map(([key, val]) => (
             <View key={key} style={styles.techRow}>
