@@ -1,0 +1,38 @@
+# ─── Global ──────────────────────────────────
+{
+  email admin@acte.app
+}
+
+# ─── Web Frontend ─────────────────────────────
+acte.app {
+  reverse_proxy web:3000
+
+  encode zstd gzip
+
+  header /* {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "DENY"
+    Referrer-Policy "strict-origin-when-cross-origin"
+  }
+}
+
+# ─── API Backend ──────────────────────────────
+api.acte.app {
+  reverse_proxy backend:4000
+
+  encode zstd gzip
+
+  header /* {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "DENY"
+  }
+}
+
+# ─── File Uploads (R2 Proxy) ──────────────────
+uploads.acte.app {
+  reverse_proxy https://pub-<R2_PUBLIC_BUCKET>.r2.dev {
+    header_up Host {upstream_hostport}
+  }
+}
