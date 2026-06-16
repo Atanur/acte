@@ -58,9 +58,7 @@ export default function HomeScreen() {
           <View>
             <Text style={styles.errorText}>Bağlantı hatası</Text>
             <Text style={styles.errorDetail}>{error}</Text>
-            <Text style={styles.hint}>
-              Backend'in çalıştığından emin olun: {API_URL}
-            </Text>
+            <Text style={styles.hint}>Backend'in çalıştığından emin olun: {API_URL}</Text>
           </View>
         )}
 

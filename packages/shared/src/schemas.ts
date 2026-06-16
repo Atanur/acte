@@ -3,10 +3,7 @@ import { z } from "zod";
 // ─── Auth Schemas ────────────────────────────────────────
 export const loginSchema = z.object({
   email: z.string().email("Geçerli bir email adresi girin"),
-  password: z
-    .string()
-    .min(6, "Şifre en az 6 karakter olmalıdır")
-    .max(100),
+  password: z.string().min(6, "Şifre en az 6 karakter olmalıdır").max(100),
 });
 
 export const registerSchema = loginSchema.extend({

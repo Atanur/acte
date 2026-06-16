@@ -52,9 +52,7 @@ export default function Home() {
           </h2>
 
           {loading && (
-            <p className="text-zinc-400 text-sm animate-pulse">
-              API&apos;ye bağlanıyor...
-            </p>
+            <p className="text-zinc-400 text-sm animate-pulse">API&apos;ye bağlanıyor...</p>
           )}
 
           {error && (
@@ -69,17 +67,13 @@ export default function Home() {
 
           {message && !error && (
             <div className="space-y-3">
-              <p className="text-lg font-medium text-emerald-400">
-                {message.message}
-              </p>
+              <p className="text-lg font-medium text-emerald-400">{message.message}</p>
               <p className="text-sm text-zinc-400">{message.note}</p>
               <div className="flex gap-2 text-xs">
                 <span className="rounded-md bg-zinc-800 px-2 py-1 text-zinc-400">
                   ortam: {message.env}
                 </span>
-                <span className="rounded-md bg-zinc-800 px-2 py-1 text-zinc-400">
-                  {API_URL}
-                </span>
+                <span className="rounded-md bg-zinc-800 px-2 py-1 text-zinc-400">{API_URL}</span>
               </div>
             </div>
           )}
@@ -93,10 +87,7 @@ export default function Home() {
             </h2>
             <div className="grid grid-cols-2 gap-3">
               {Object.entries(info.techStack).map(([key, val]) => (
-                <div
-                  key={key}
-                  className="rounded-lg bg-zinc-800/50 p-3 text-sm"
-                >
+                <div key={key} className="rounded-lg bg-zinc-800/50 p-3 text-sm">
                   <span className="text-zinc-500 capitalize">{key}</span>
                   <p className="text-zinc-200 mt-0.5">{val}</p>
                 </div>
