@@ -215,7 +215,7 @@ export async function replayQueue(): Promise<void> {
   isProcessing = false;
 
   // Notify subscribers
-  onReplayCallbacks.forEach((cb) => cb());
+  onReplayCallbacks.forEach((cb) => { cb(); });
 }
 
 // ─── Subscriptions ────────────────────────────────────

@@ -70,7 +70,8 @@ const syncRouter = new Hono();
  * on the next poll.
  */
 syncRouter.post("/", zValidator("json", syncRequestSchema), async (c) => {
-  const { lastSyncedAt: _lastSyncedAt, tables: _tables, cursor: _cursor, limit: _limit } = c.req.valid("json");
+  const { lastSyncedAt: _lastSyncedAt, tables: _tables, cursor: _cursor, limit: _limit }
+    = c.req.valid("json");
 
   // ── Placeholder: Replace with actual DB queries ─────
   // In production, query your database for rows whose

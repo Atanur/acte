@@ -15,7 +15,7 @@
       "!**/node_modules",
       "!**/*.js",
       "!**/*.css",
-      "!apps/web/public/**"
+      "!apps/web/public"
     ]
   },
   "formatter": {
