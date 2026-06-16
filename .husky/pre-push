@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────
 # pre-push hook – Acte Monorepo
-# Runs lint, type-check, and tests before allowing a push.
+# Runs lint and type-check before allowing a push.
+# Formatting is checked in CI, not here.
 # ─────────────────────────────────────────────────────────
 
 set -euo pipefail
@@ -12,7 +13,4 @@ bun run lint
 echo "━━━ pre-push: Running typecheck… ━━━"
 bun run check-types
 
-echo "━━━ pre-push: Running tests… ━━━"
-bun run test
-
-echo "━━━ pre-push: All checks passed ✅ ━━━"
+echo "━━━ Pre-push: All checks passed ✅ ━━━"

@@ -6,17 +6,18 @@
   "scripts": {
     "dev": "turbo dev --ui tui",
     "build": "turbo build",
-    "lint": "biome check .",
-    "lint:fix": "biome check --write .",
+    "lint": "biome lint .",
+    "lint:fix": "biome check --write --unsafe .",
     "prepare": "husky",
     "clean": "turbo clean",
     "format": "biome format --write .",
+    "format:check": "biome format .",
     "check-types": "turbo typecheck",
     "test": "turbo test"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,md,css}": [
-      "biome check --write --no-errors-on-unmatched"
+      "biome check --write --unsafe --no-errors-on-unmatched"
     ]
   },
   "devDependencies": {
