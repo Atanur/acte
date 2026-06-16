@@ -1,17 +1,17 @@
 # ─────────────────────────────────────────────────────────
 # CodeQL Analysis – Acte
 # ─────────────────────────────────────────────────────────
-# Runs CodeQL security analysis on pushes to main/develop
-# and on pull requests targeting those branches.
+# Runs CodeQL security analysis on pushes to main
+# and on pull requests targeting main.
 # ─────────────────────────────────────────────────────────
 
 name: "CodeQL"
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
-    branches: [main, develop]
+    branches: [main]
   schedule:
     - cron: "0 8 * * 1" # Every Monday at 08:00 UTC
 
