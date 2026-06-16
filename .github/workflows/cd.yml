@@ -1,0 +1,66 @@
+name: CD
+on:
+  push:
+    branches: [main]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun lint
+      - run: bun check-types
+      - run: bun test
+      - run: bun build
+
+  deploy-web:
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: cd apps/web && bun run build
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: \${{ secrets.CF_API_TOKEN }}
+          command: pages deploy apps/web/out --project-name=acte-web
+
+  deploy-backend:
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run build --filter=backend...
+      - run: docker build -f docker/Dockerfile.backend -t ghcr.io/acte/backend:\${{ github.sha }} .
+      - run: docker push ghcr.io/acte/backend:\${{ github.sha }}
+      - run: |
+          ssh deploy@49.12.109.24 "
+            cd /opt/acte &&
+            docker compose pull backend &&
+            docker compose up -d backend
+          "
+
+  deploy-mobile-ios:
+    needs: quality
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: cd apps/mobile && npx expo prebuild --platform ios
+      - run: bundle exec fastlane match appstore --readonly
+      - run: bundle exec fastlane gym --scheme acte --export_method app-store
+      - run: bundle exec fastlane pilot upload
+        env:
+          APP_STORE_CONNECT_API_KEY: \${{ secrets.APP_STORE_CONNECT_API_KEY }}
+          APP_STORE_CONNECT_KEY_ID: \${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: \${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          MATCH_PASSWORD: \${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_BASIC_AUTHORIZATION: \${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+          FASTLANE_USER: \${{ secrets.APPLE_ID }}
+          FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: \${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}

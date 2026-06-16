@@ -1,7 +1,12 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+## [0.1.0] - 2026-06-16
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+### Initial Release
 
+- Monorepo setup with Turborepo + Bun workspaces
+- Web: Next.js 16 + React 19 + Tailwind v4
+- Backend: Hono 4 + Bun
+- Mobile: Expo SDK 56 + Expo Router
+- Shared: Zod schemas, types, constants
+- Enterprise toolchain: Husky, commitlint, semantic-release

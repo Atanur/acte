@@ -1,0 +1,33 @@
+{
+  "name": "jobs",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./queues/email": {
+      "import": "./dist/queues/email.js",
+      "types": "./dist/queues/email.d.ts"
+    },
+    "./queues/notifications": {
+      "import": "./dist/queues/notifications.js",
+      "types": "./dist/queues/notifications.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "bullmq": "^5.42.0",
+    "ioredis": "^5.6.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

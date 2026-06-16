@@ -254,39 +254,86 @@ jobs:
       - run: bun build             # Turbo build
 ```
 
-### 3.2 CD — Deploy
+### 3.2 CD — Deploy (Main Branch)
 
 ```yaml
 # .github/workflows/cd.yml
 on:
   push:
     branches: [main]
+
 jobs:
-  deploy:
+  # ─── Quality Gate ─────────────────────────────
+  quality:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
-
       - run: bun install --frozen-lockfile
-      - run: bun lint && bun typecheck && bun test
+      - run: bun lint
+      - run: bun typecheck
+      - run: bun test
       - run: bun build
 
-      # Backend: Docker build & push
+  # ─── Web: Cloudflare Pages ────────────────────
+  deploy-web:
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: cd apps/web && bun run build
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          command: pages deploy apps/web/out --project-name=acte-web
+
+  # ─── Backend: Docker + VPS ────────────────────
+  deploy-backend:
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run build --filter=backend...
       - run: docker build -f docker/Dockerfile.backend -t ghcr.io/acte/backend:${{ github.sha }} .
       - run: docker push ghcr.io/acte/backend:${{ github.sha }}
+      - run: |
+          ssh deploy@49.12.109.24 "
+            cd /opt/acte &&
+            docker compose pull backend &&
+            docker compose up -d backend
+          "
 
-      # Deploy to VPS
-      - run: ssh vps "cd /opt/acte && docker compose pull && docker compose up -d"
+  # ─── Mobile: Fastlane iOS → TestFlight ────────
+  deploy-mobile-ios:
+    needs: quality
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: cd apps/mobile && npx expo prebuild --platform ios
+      - run: bundle exec fastlane match appstore --readonly
+      - run: bundle exec fastlane gym --scheme acte --export_method app-store
+      - run: bundle exec fastlane pilot upload
+        env:
+          APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          FASTLANE_USER: ${{ secrets.APPLE_ID }}
 ```
 
 ### 3.3 Release — Semantic Versioning
 
 ```yaml
 # .github/workflows/release.yml
+name: Release
 on:
   push:
     branches: [main]
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -756,19 +803,23 @@ HEALTHCHECK --interval=30s --timeout=3s \
 CMD ["bun", "run", "start"]
 ```
 
-### 11.2 Production Docker Compose
+### 11.2 Production Docker Compose (VPS — Nginx + Backend + PostgreSQL)
 
 ```yaml
 # docker/docker-compose.prod.yml
 services:
-  caddy:
-    image: caddy:2-alpine
+  nginx:
+    image: nginx:1.27-alpine
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - certbot_data:/var/www/certbot
+    depends_on:
+      - backend
+    restart: unless-stopped
 
   backend:
     image: ghcr.io/acte/backend:latest
@@ -776,12 +827,20 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL}
       NODE_ENV: production
+    expose:
+      - "4000"
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
   postgres:
     image: postgres:17-alpine
+    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U acte"]
     volumes:
@@ -790,16 +849,71 @@ services:
       POSTGRES_DB: acte
       POSTGRES_USER: acte
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    expose:
+      - "5432"
+
+volumes:
+  pgdata:
+  certbot_data:
 ```
 
-### 11.3 VPS Deployment Script
+### 11.3 Nginx Config
+
+```nginx
+# docker/nginx.conf
+events {}
+
+http {
+  # Backend reverse proxy
+  upstream backend {
+    server backend:4000;
+  }
+
+  server {
+    listen 80;
+    server_name api.acte.app;
+
+    location / {
+      proxy_pass http://backend;
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # ACME challenge for SSL
+    location /.well-known/acme-challenge/ {
+      root /var/www/certbot;
+    }
+  }
+
+  # HTTPS (after certbot)
+  server {
+    listen 443 ssl;
+    server_name api.acte.app;
+
+    ssl_certificate /etc/nginx/ssl/fullchain.pem;
+    ssl_certificate_key /etc/nginx/ssl/privkey.pem;
+
+    location / {
+      proxy_pass http://backend;
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+    }
+  }
+}
+```
+
+### 11.4 VPS Deployment Script (Nginx + Certbot SSL)
 
 ```bash
 # scripts/deploy.sh
 #!/bin/bash
 set -e
 
-SERVER="deploy@78.189.145.59"
+SERVER="deploy@49.12.109.24"
 PROJECT="acte"
 
 echo "🔄 Pulling latest images..."
@@ -947,50 +1061,115 @@ packages/shared/src/i18n/
 
 ---
 
-## 16. EAS Build & Store Submit
+## 16. Mobile: Fastlane iOS Build & TestFlight
 
-Expo uygulamasını App Store ve Google Play'e yollama süreci.
+### 16.1 Neden Fastlane (EAS değil)?
 
-### EAS Build Profiles
+| Özellik | EAS Build | Fastlane |
+|---------|-----------|----------|
+| **Build altyapısı** | Expo sunucuları | Kendi runner'ın (GitHub macOS) |
+| **Kontrol** | Kısıtlı | Full kontrol (signing, provisioning) |
+| **İş akışı** | `eas build --platform ios` | `expo prebuild → fastlane gym → pilot` |
+| **Ücret** | 30 build/ay ücretsiz | GitHub Actions dakikasıyla |
+| **Code signing** | Expo yönetir | Fastlane Match ile |
 
-```json
-// apps/mobile/eas.json
-{
-  "build": {
-    "development": {
-      "developmentClient": true,
-      "distribution": "internal"
-    },
-    "preview": {
-      "android": {
-        "buildType": "apk"
-      },
-      "ios": {
-        "simulator": true
-      }
-    },
-    "production": {}
-  }
-}
+### 16.2 Fastlane Setup
+
+```
+apps/mobile/
+├── fastlane/
+│   ├── Fastfile           # Lane tanımları
+│   ├── Matchfile          # Code signing config
+│   └── Appfile            # Apple ID, bundle ID
+└── Gemfile                # fastlane bağımlılığı
 ```
 
-### CI/CD Entegrasyonu
+### 16.3 Fastfile
+
+```ruby
+# apps/mobile/fastlane/Fastfile
+default_platform(:ios)
+
+platform :ios do
+  desc "Build and upload to TestFlight"
+  lane :release do
+    match(type: :appstore)
+    gym(
+      scheme: "acte",
+      export_method: "app-store",
+      workspace: "acte.xcworkspace",
+    )
+    pilot(
+      skip_waiting_for_build_processing: true,
+      distribute_external: false,
+    )
+  end
+
+  desc "Build for development"
+  lane :dev do
+    match(type: :development)
+    gym(
+      scheme: "acte",
+      export_method: "development",
+    )
+  end
+end
+```
+
+### 16.4 GitHub Actions macOS Runner Workflow
 
 ```yaml
-# GitHub Actions ile EAS Build
-- run: npx eas build --platform all --profile production --non-interactive
-- run: npx eas submit --platform android --profile production
-- run: npx eas submit --platform ios --profile production
+# .github/workflows/mobile-ios.yml
+name: Mobile iOS Build
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/mobile/**"
+      - "packages/shared/**"
+      - "packages/api-client/**"
+
+jobs:
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install --frozen-lockfile
+
+      - name: Generate native code
+        run: cd apps/mobile && npx expo prebuild --platform ios --clean
+
+      - name: Fastlane build & upload
+        run: |
+          cd apps/mobile
+          bundle exec fastlane ios release
+        env:
+          APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+          FASTLANE_USER: ${{ secrets.APPLE_ID }}
+          FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
 ```
 
-### Version Sync
+### 16.5 Gereksinimler (Setup Checklist)
 
-EAS build alırken `app.json`'daki `version` ve `buildNumber`, semantic-release ile senkronize edilir:
-
-```yaml
-# CI'da version güncelleme
-- run: npx json -I -f apps/mobile/app.json -e "this.expo.version='$VERSION'"
-```
+- [ ] Apple Developer Program üyeliği ($99/yıl)
+- [ ] App Store Connect'ta uygulama kaydı
+- [ ] App Store Connect API Key oluşturma (App Store Connect → Users → Keys)
+- [ ] GitHub Secrets'e ekleme:
+  - `APP_STORE_CONNECT_API_KEY` (base64 encoded .p8 key)
+  - `APP_STORE_CONNECT_KEY_ID`
+  - `APP_STORE_CONNECT_ISSUER_ID`
+  - `MATCH_PASSWORD`
+  - `MATCH_GIT_BASIC_AUTHORIZATION`
+  - `APPLE_ID`
+  - `APPLE_APP_SPECIFIC_PASSWORD`
+- [ ] Fastlane Match repo'su oluşturma (private git repo)
+- [ ] Sertifikaları Match'e yükleme: `fastlane match init` + `fastlane match appstore`
 
 ---
 
@@ -1546,7 +1725,7 @@ Amaç:      Docker, VPS deploy, monitoring
 Plan:
   - Dockerfile (multi-stage)
   - Docker Compose (prod)
-  - Caddy reverse proxy + SSL
+  - Nginx reverse proxy + SSL (Certbot)
   - VPS deploy script
   - Pino structured logging
   - Sentry error tracking
@@ -1586,7 +1765,7 @@ Plan:
 | **Git Hooks** | Husky + lint-staged + commitlint | Kalite gates |
 | **CI/CD** | GitHub Actions | GitHub ile entegre |
 | **Container** | Docker + Docker Compose | Taşınabilir deploy |
-| **Proxy** | Caddy | Auto SSL, basit config |
+| **Proxy** | Nginx | Reverse proxy, SSL, esnek |
 | **Queue** | BullMQ + Redis 7 | Async işlemler, cache, rate limiting |
 | **Email** | Resend | 100 email/gün ücretsiz, React Email templates |
 | **File Storage** | Cloudflare R2 | 10GB ücretsiz, egress ücreti yok, S3 uyumlu |

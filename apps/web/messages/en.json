@@ -1,0 +1,49 @@
+{
+  "common": {
+    "appName": "Acte",
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "close": "Close"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot Password",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "signUp": "Sign Up"
+  },
+  "home": {
+    "title": "Welcome",
+    "subtitle": "Manage your web, mobile, and backend projects in a single monorepo with Acte.",
+    "getStarted": "Get Started",
+    "learnMore": "Learn More"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications yet",
+    "markAsRead": "Mark as read",
+    "permissionDenied": "Notification permission denied"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "languageTurkish": "Turkish",
+    "languageEnglish": "English",
+    "notifications": "Notifications",
+    "privacy": "Privacy",
+    "about": "About"
+  }
+}

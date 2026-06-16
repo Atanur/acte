@@ -1,0 +1,67 @@
+{
+  "title": "Acte – Service Overview",
+  "uid": "acte-overview",
+  "version": 1,
+  "schemaVersion": 39,
+  "tags": ["acte", "production"],
+  "timezone": "browser",
+  "editable": true,
+  "panels": [
+    {
+      "title": "Request Rate",
+      "type": "graph",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "rate(http_requests_total[5m])",
+          "legendFormat": "{{route}}",
+          "refId": "A"
+        }
+      ],
+      "description": "HTTP request rate per route over the last 5 minutes",
+      "yaxes": [{ "format": "short", "label": "req/s" }, { "format": "short" }]
+    },
+    {
+      "title": "Error Rate (4xx / 5xx)",
+      "type": "graph",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 },
+      "targets": [
+        {
+          "expr": "rate(http_requests_total{status=~\"4..\"}[5m])",
+          "legendFormat": "4xx",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(http_requests_total{status=~\"5..\"}[5m])",
+          "legendFormat": "5xx",
+          "refId": "B"
+        }
+      ],
+      "description": "HTTP error rate split by 4xx and 5xx status codes",
+      "yaxes": [{ "format": "short", "label": "errors/s" }, { "format": "short" }]
+    },
+    {
+      "title": "Uptime / Health",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 },
+      "targets": [
+        {
+          "expr": "up{job=\"backend\"}",
+          "legendFormat": "Backend",
+          "refId": "A"
+        }
+      ],
+      "description": "Backend service uptime indicator (1 = up, 0 = down)",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }]
+          }
+        }
+      }
+    }
+  ],
+  "refresh": "30s"
+}

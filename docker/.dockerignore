@@ -1,0 +1,49 @@
+# ─── Docker ignore rules ─────────────────────────────
+# These patterns are excluded from the Docker build
+# context, speeding up builds and keeping images small.
+
+# Dependencies – always re-installed inside the image
+node_modules/
+.pnpm-store/
+.cache/
+
+# Version control
+.git/
+.gitignore
+.gitattributes
+
+# Build artifacts (rebuilt inside the container)
+dist/
+.next/
+.expo/
+
+# Environment files (contain secrets)
+.env
+.env.*
+!.env.example
+
+# IDE & OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Documentation (not needed at runtime)
+README.md
+LICENSE
+CHANGELOG.md
+
+# CI / tooling
+.github/
+.husky/
+.commitlintrc.*
+.lintstagedrc.*
+turbo.json
+vitest.workspace.ts
+
+# Logs
+*.log
+logs/

@@ -7,8 +7,7 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.json"],
-    "maxSize": 1048576
+    "includes": ["**", "!**/dist", "!**/.next", "!**/.expo", "!**/node_modules", "!**/*.js", "!**/*.css"]
   },
   "formatter": {
     "enabled": true,
@@ -20,13 +19,6 @@
     "enabled": true,
     "rules": {
       "preset": "recommended"
-    }
-  },
-  "javascript": {
-    "formatter": {
-      "quoteStyle": "double",
-      "semicolons": "always",
-      "trailingCommas": "all"
     }
   }
 }

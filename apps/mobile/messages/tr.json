@@ -1,0 +1,49 @@
+{
+  "common": {
+    "appName": "Acte",
+    "loading": "Yükleniyor...",
+    "error": "Bir hata oluştu",
+    "retry": "Tekrar dene",
+    "cancel": "İptal",
+    "save": "Kaydet",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "search": "Ara",
+    "back": "Geri",
+    "next": "İleri",
+    "submit": "Gönder",
+    "close": "Kapat"
+  },
+  "auth": {
+    "login": "Giriş Yap",
+    "logout": "Çıkış Yap",
+    "register": "Kayıt Ol",
+    "email": "E-posta",
+    "password": "Şifre",
+    "forgotPassword": "Şifremi Unuttum",
+    "noAccount": "Hesabın yok mu?",
+    "hasAccount": "Zaten hesabın var mı?",
+    "signUp": "Kaydol"
+  },
+  "home": {
+    "title": "Hoş Geldiniz",
+    "subtitle": "Acte ile web, mobil ve backend projelerinizi tek bir monorepo'da yönetin.",
+    "getStarted": "Başlayın",
+    "learnMore": "Daha Fazla Bilgi"
+  },
+  "notifications": {
+    "title": "Bildirimler",
+    "empty": "Henüz bildiriminiz yok",
+    "markAsRead": "Okundu olarak işaretle",
+    "permissionDenied": "Bildirim izni reddedildi"
+  },
+  "settings": {
+    "title": "Ayarlar",
+    "language": "Dil",
+    "languageTurkish": "Türkçe",
+    "languageEnglish": "İngilizce",
+    "notifications": "Bildirimler",
+    "privacy": "Gizlilik",
+    "about": "Hakkında"
+  }
+}

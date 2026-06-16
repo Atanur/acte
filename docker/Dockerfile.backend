@@ -1,32 +1,43 @@
-# ─── Stage 1: Build ──────────────────────────
+# ─────────────────────────────────────────────────────────
+# Dockerfile.backend – Multi-stage Bun/Hono backend build
+# ─────────────────────────────────────────────────────────
+# Stage 1: Build dependencies and compile the backend
+# ─────────────────────────────────────────────────────────
 FROM oven/bun:1 AS builder
 WORKDIR /app
 
-# Monorepo'yu kopyala
+# Copy the entire monorepo (uses .dockerignore to skip node_modules, .git, dist)
 COPY . .
 
-# Bağımlılıkları yükle
+# Install dependencies — frozen lockfile ensures reproducible builds
 RUN bun install --frozen-lockfile --filter backend...
 
-# Backend'i build et
+# Compile the Hono backend into a standalone Bun bundle
 RUN bun run build --filter backend...
 
-# ─── Stage 2: Production ─────────────────────
+# ─────────────────────────────────────────────────────────
+# Stage 2: Minimal production image
+# ─────────────────────────────────────────────────────────
 FROM oven/bun:1-slim
 WORKDIR /app
 
-# User
+# Create a non-root user for security
 RUN addgroup --system --gid 1001 acte && \
     adduser --system --uid 1001 acte
-USER acte
 
-# Sadece backend dist'ini kopyala
+# Copy only the compiled output and the start script
 COPY --from=builder --chown=acte:acte /app/apps/backend/dist ./dist
 COPY --from=builder --chown=acte:acte /app/apps/backend/package.json ./
 
+# Drop privileges
+USER acte
+
+# Application listens on this port
 EXPOSE 4000
 
+# Health-check: calls the /api/health endpoint exposed by the Hono app
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "fetch('http://localhost:4000/api/health').then(r=>r.json()).then(d=>process.exit(d.status==='ok'?0:1)).catch(()=>process.exit(1))"
+  CMD bun -e "fetch('http://localhost:4000/api/health').then(r=>r.json()).then(d=>process.exit(d.status==='ok'?0:1)).catch(()=>process.exit(1))"
 
+# Default command — the "start" script runs the compiled dist/index.js
 CMD ["bun", "run", "start"]

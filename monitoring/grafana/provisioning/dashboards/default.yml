@@ -1,0 +1,15 @@
+# ─────────────────────────────────────────────────────────
+# Grafana Dashboard Provisioning – Acte
+# ─────────────────────────────────────────────────────────
+
+apiVersion: 1
+
+providers:
+  - name: "Acte Dashboards"
+    orgId: 1
+    folder: "Acte"
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    options:
+      path: /etc/grafana/dashboards

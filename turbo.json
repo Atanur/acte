@@ -16,6 +16,11 @@
     "lint": {
       "dependsOn": ["^build"]
     },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "inputs": ["$TURBO_DEFAULT$", "src/**/*.test.*", "src/**/*.spec.*"]
+    },
     "clean": {
       "cache": false
     },

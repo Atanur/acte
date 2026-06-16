@@ -1,0 +1,53 @@
+# ─────────────────────────────────────────────────────────
+# Dependabot Configuration – Acte
+# ─────────────────────────────────────────────────────────
+# Automated dependency updates for npm, Docker, and
+# GitHub Actions.
+# ─────────────────────────────────────────────────────────
+
+version: 2
+updates:
+  # ── npm / Bun dependencies ──────────────────────────
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Istanbul"
+    open-pull-requests-limit: 10
+    assignees:
+      - "acte-team"
+    labels:
+      - "dependencies"
+      - "npm"
+
+  # ── Docker images ────────────────────────────────────
+  - package-ecosystem: "docker"
+    directory: "/docker"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Istanbul"
+    open-pull-requests-limit: 5
+    assignees:
+      - "acte-team"
+    labels:
+      - "dependencies"
+      - "docker"
+
+  # ── GitHub Actions ───────────────────────────────────
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Istanbul"
+    open-pull-requests-limit: 5
+    assignees:
+      - "acte-team"
+    labels:
+      - "dependencies"
+      - "github-actions"

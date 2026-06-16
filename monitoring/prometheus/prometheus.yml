@@ -1,0 +1,21 @@
+# ─────────────────────────────────────────────────────────
+# Prometheus Configuration – Acte
+# ─────────────────────────────────────────────────────────
+
+global:
+  scrape_interval:     15s   # How frequently to scrape targets
+  evaluation_interval: 15s   # How frequently to evaluate rules
+
+# ── Scrape Targets ────────────────────────────────────────
+
+scrape_configs:
+  # Prometheus itself (health / metrics)
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # Backend API metrics endpoint
+  - job_name: "backend"
+    metrics_path: "/api/metrics"
+    static_configs:
+      - targets: ["backend:4000"]
