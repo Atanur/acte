@@ -136,7 +136,7 @@ export function handleDeepLink(url: string): void {
   const href = queryString ? `${route}?${queryString}` : route;
 
   // Use replace to avoid stacking links in the nav history
-  router.replace(href as any);
+  router.replace(href as Parameters<typeof router.replace>[0]);
 }
 
 // ─── Expo Router Linking Configuration ──────────────

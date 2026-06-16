@@ -7,7 +7,16 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": ["**", "!**/dist", "!**/.next", "!**/.expo", "!**/node_modules", "!**/*.js", "!**/*.css"]
+    "includes": [
+      "**",
+      "!**/dist",
+      "!**/.next",
+      "!**/.expo",
+      "!**/node_modules",
+      "!**/*.js",
+      "!**/*.css",
+      "!apps/web/public/**"
+    ]
   },
   "formatter": {
     "enabled": true,

@@ -79,11 +79,12 @@ const queueInstances = new Map<string, Queue>();
  * Queues are cached once created.
  */
 export function getQueue(name: QueueName): Queue {
-  if (!queueInstances.has(name)) {
-    const queue = new Queue(name, defaultQueueOptions);
-    queueInstances.set(name, queue);
-  }
-  return queueInstances.get(name)!;
+  const existing = queueInstances.get(name);
+  if (existing) return existing;
+
+  const queue = new Queue(name, defaultQueueOptions);
+  queueInstances.set(name, queue);
+  return queue;
 }
 
 // ─── Worker Factory ──────────────────────────────────

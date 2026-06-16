@@ -30,7 +30,7 @@ export class DefaultFeatureFlagStore implements FeatureFlagStore {
   isEnabled(key: FeatureFlagKey): boolean {
     // Check overrides first
     if (this.overrides.has(key)) {
-      return this.overrides.get(key)!;
+      return this.overrides.get(key) ?? false;
     }
     return getDefaultFlag(key);
   }
